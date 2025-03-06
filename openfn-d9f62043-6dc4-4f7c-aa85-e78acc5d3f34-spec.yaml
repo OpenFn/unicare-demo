@@ -1,161 +1,299 @@
 name: unicare-demo
-# description:
-# credentials:
-# globals:
+description: |
+  Demo project for showcasing UNICARE workflows
+collections: null
+credentials:
+  aissatou@openfn.org-Unicare-Demo:
+    name: Unicare Demo
+    owner: aissatou@openfn.org
 workflows:
-  inform-to-unicare:
-    name: inform-to-unicare
+  1-inform-to-unicare:
+    name: 1-inform-to-unicare
     jobs:
-      Clean-and-process-inform-data:
-        name: Clean and process inform data
+      Clean-and-map-inform-data:
+        name: Clean and map inform data
         adaptor: '@openfn/language-common@latest'
-        # credential:
-        # globals:
+        credential: null
         body: |
-          // Get started by adding operations from the API reference
           
           fn(state => {
-            console.log('inform form data:: ', JSON.stringify(state.data, null, 2));
+            console.log('Preparing and cleaning case data...'); 
+            const { data } = state;
+
+            //Here we clean & map the data using JavaScript
+            const mapConsent = {
+              'yes': 'true',
+              'no': 'false'
+            }
+            
+            let age = Number(data.Your_age);
+
+            if (age > 0 && age <= 17) {
+              age = '0_17_years_old_a619c9b';
+            } else if (age >= 18 && age <= 59) {
+              age = '18_59_years_old_b6fd344';
+            } else {
+              age = '60_and_above_b0f9d41';
+            }
+
+            const cleanedStartDate = data.start.substring(0, 10);
+           
+            //Here we add cleaned attributes to our payload
+            state.cleanedData = {
+              submitDate: cleanedStartDate,
+              age_range: age,
+              consent: mapConsent[data.Do_we_have_your_consent_to_doc]
+            }
             return state;
           });
+
+
+            // const name_first = data.Your_first_name;
+            // const name_last = data.Your_last_name;
+            // const feedback_comment_f076498 = data.Details_about_your_f_edback_or_complaints
+
       Register-case-in-Primero:
         name: Register case in Primero
         adaptor: '@openfn/language-primero@latest'
-        # credential:
-        # globals:
+        credential: aissatou@openfn.org-Unicare-Demo
         body: |
-          // Get started by adding operations from the API reference
-          
-      Send-Administrator-Email-Alert:
-        name: Send Administrator Email Alert
+          createCase({
+            data: {
+              name_first: state.data.Your_first_name,
+              name_last: state.data.Your_last_name,
+              feedback_comment_f076498: state.data.Details_about_your_f_edback_or_complaints,
+              age: state.data.Your_age,
+              sex: state.data.Your_sex,
+              consent_reporting: state.cleanedData.consent,
+              identification_date: state.cleanedData.submitDate,
+              age_range_3df3bdb: state.cleanedData.ageRange,
+              feedback_channel_eba5764: 'mobile_teams__field_staff__monitors_afdfc51',
+              module_id: 'primeromodule-cp',
+              nationality: [
+                'turkey'
+              ],
+              badMapping: 123,
+              //telephone_current: state.data.Your_phone
+            },
+          });
+      Send-manager-email-alert:
+        name: Send manager email alert
         adaptor: '@openfn/language-mailgun@latest'
-        # credential:
-        # globals:
+        credential: null
         body: |
           // Get started by adding operations from the API reference
-          
+
     triggers:
       webhook:
         type: webhook
         enabled: true
     edges:
-      webhook->Clean-and-process-inform-data:
+      webhook->Clean-and-map-inform-data:
         source_trigger: webhook
-        target_job: Clean-and-process-inform-data
+        target_job: Clean-and-map-inform-data
         condition_type: always
         enabled: true
-      Clean-and-process-inform-data->Register-case-in-Primero:
-        source_job: Clean-and-process-inform-data
+      Clean-and-map-inform-data->Register-case-in-Primero:
+        source_job: Clean-and-map-inform-data
         target_job: Register-case-in-Primero
         condition_type: on_job_success
         enabled: true
-      Clean-and-process-inform-data->Send-Administrator-Email-Alert:
-        source_job: Clean-and-process-inform-data
-        target_job: Send-Administrator-Email-Alert
+      Clean-and-map-inform-data->Send-manager-email-alert:
+        source_job: Clean-and-map-inform-data
+        target_job: Send-manager-email-alert
         condition_type: js_expression
-        condition_label: High risk case?
-        condition_expression: {}
+        condition_label: 'High risk case?'
+        condition_expression: |
+          state.data.How_urgent_is_this_case ==="top_priority_urgent"
         enabled: true
-  rapidpro-inform-unicare:
-    name: rapidpro-inform-unicare
+  2-rapidpro-to-unicare:
+    name: 2-rapidpro-to-unicare
     jobs:
-      recieve-data-in-OpenFn:
-        name: recieve data in OpenFn
+      clean-rapidpro-data:
+        name: clean rapidpro data
         adaptor: '@openfn/language-common@latest'
-        # credential:
-        # globals:
+        credential: null
         body: |
-          // Get started by adding operations from the API reference
-          
-      Map-Rapid-data:
-        name: Map Rapid data
-        adaptor: '@openfn/language-common@latest'
-        # credential:
-        # globals:
-        body: |
-          // Get started by adding operations from the API reference
-          
-      Map-inform-data:
-        name: Map inform data
-        adaptor: '@openfn/language-common@latest'
-        # credential:
-        # globals:
-        body: |
-          // Get started by adding operations from the API reference
-          
-      Load-Rapid-pro-data-to-Unicare:
-        name: Load Rapid pro data to Unicare
+          fn(state => {
+            // do some things to state
+            const { data } = state; 
+
+            const consentMap = {
+              'Yes': 'true',
+              'No': 'false'
+            }
+
+            const cleanPhone = data.contact.urn.substring(4,16); 
+
+            state.cleanedData = {
+              firstname: data.results.firstname.value,
+              lastname: data.results.lastname.value,
+              consent: consentMap[data.results.consent.value],
+              feedback: data.results.case_description.value,
+              phone: cleanPhone,
+            }
+
+            return state;
+          });
+      register-case:
+        name: register case
         adaptor: '@openfn/language-primero@latest'
-        # credential:
-        # globals:
+        credential: aissatou@openfn.org-Unicare-Demo
         body: |
           // Get started by adding operations from the API reference
-          
-      Load-inform-data-to-Unicare:
-        name: Load inform data to Unicare
-        adaptor: '@openfn/language-primero@latest'
-        # credential:
-        # globals:
-        body: |
-          // Get started by adding operations from the API reference
-          
+          createCase({
+            data: {
+              name_first: state.cleanedData.firstname,
+              name_last: state.cleanedData.lastName,
+              feedback_comment_f076498: state.cleanedData.feedback,
+              consent_reporting: state.cleanedData.consent,
+              telephone_current: state.cleanedData.phone,
+              feedback_channel_eba5764: 'messaging_app_2da699d',
+              module_id: 'primeromodule-cp',
+              nationality: [
+                'turkey'
+              ],
+            },
+          });
+
+          // name_first: 'Elif',
+          // name_last: 'Adle',
+          // sex: 'female',
+          // age: 56,
     triggers:
       webhook:
         type: webhook
         enabled: true
     edges:
-      recieve-data-in-OpenFn->Map-inform-data:
-        source_job: recieve-data-in-OpenFn
-        target_job: Map-inform-data
-        condition_type: js_expression
-        condition_label: Inform data?
-        condition_expression: {}
-        enabled: true
-      recieve-data-in-OpenFn->Map-Rapid-data:
-        source_job: recieve-data-in-OpenFn
-        target_job: Map-Rapid-data
-        condition_type: js_expression
-        condition_label: Rapid pro data?
-        condition_expression: {}
-        enabled: true
-      webhook->recieve-data-in-OpenFn:
+      webhook->clean-rapidpro-data:
         source_trigger: webhook
-        target_job: recieve-data-in-OpenFn
+        target_job: clean-rapidpro-data
         condition_type: always
         enabled: true
-      Map-Rapid-data->Load-Rapid-pro-data-to-Unicare:
-        source_job: Map-Rapid-data
-        target_job: Load-Rapid-pro-data-to-Unicare
+      clean-rapidpro-data->register-case:
+        source_job: clean-rapidpro-data
+        target_job: register-case
         condition_type: on_job_success
         enabled: true
-      Map-inform-data->Load-inform-data-to-Unicare:
-        source_job: Map-inform-data
-        target_job: Load-inform-data-to-Unicare
-        condition_type: on_job_success
-        enabled: true
-  rapidpro-to-unicare:
-    name: rapidpro-to-unicare
+  case-referrals-sync:
+    name: case-referrals-sync
     jobs:
-      New-job:
-        name: New job
-        adaptor: '@openfn/language-common@latest'
-        # credential:
-        # globals:
+      Get-new-referrals:
+        name: Get new referrals
+        adaptor: '@openfn/language-primero@latest'
+        credential: aissatou@openfn.org-Unicare-Demo
         body: |
           // Get started by adding operations from the API reference
-          
-          fn(state => {
-            // do some things to state
-            console.log('from rapidpro::', state.data); 
-            return state;
+
+
+          getCases({
+          remote: true,
+          record_id: '027531ed-4bf5-415e-8cda-06357a8b95e3'
+          //record_id: "66f1bd93-9fa4-4621-bd97-cfbcd9ef46d6"
+          //query: "sex=male",
+          });
+
+
+          // createCase({
+          // data: {
+          // //nationality: "bosnia_and_herzegovina",
+          // age_range_3df3bdb: "0_17_years_old_a619c9b",
+          // name_first: "A",
+          // name_last: "D",
+          // //age: 16,
+          // //sex: "female",
+          // //name: "Edwine Edgemont",
+          // feedback_comment_f076498: "TEST",
+          // risk_level: "low"
+          // },
+          // });
+      clean-and-map-data:
+        name: clean and map data
+        adaptor: '@openfn/language-common@latest'
+        credential: null
+        body: |
+          // Get started by adding operations from the API reference
+
+      Report-to-govt-app:
+        name: Report to govt app
+        adaptor: '@openfn/language-dhis2@latest'
+        credential: null
+        body: |
+          // Get started by adding operations from the API reference
+
+      Send-to-partner-agency:
+        name: Send to partner agency
+        adaptor: '@openfn/language-openspp@latest'
+        credential: null
+        body: |
+          // Get started by adding operations from the API reference
+
+    triggers:
+      cron:
+        type: cron
+        cron_expression: '00 02 * * *'
+        enabled: true
+    edges:
+      cron->Get-new-referrals:
+        source_trigger: cron
+        target_job: Get-new-referrals
+        condition_type: always
+        enabled: true
+      Get-new-referrals->clean-and-map-data:
+        source_job: Get-new-referrals
+        target_job: clean-and-map-data
+        condition_type: on_job_success
+        enabled: true
+      clean-and-map-data->Report-to-govt-app:
+        source_job: clean-and-map-data
+        target_job: Report-to-govt-app
+        condition_type: js_expression
+        condition_label: govt referral
+        condition_expression: |
+          state.data.referral_type ==="government"
+        enabled: true
+      clean-and-map-data->Send-to-partner-agency:
+        source_job: clean-and-map-data
+        target_job: Send-to-partner-agency
+        condition_type: js_expression
+        condition_label: partner referral
+        condition_expression: |
+          state.data.referral_type ==="partner-agency"
+        enabled: true
+  register-case:
+    name: register-case
+    jobs:
+      create-case:
+        name: create case
+        adaptor: '@openfn/language-primero@2.11.13'
+        credential: aissatou@openfn.org-Unicare-Demo
+        body: |
+          createCase({
+            data: {
+              age: 38,
+              sex: 'male',
+              name_first: 'Deniz',
+              name_last: 'Demir',
+              feedback_comment_f076498: 'I would like to know why UNICEF has not yet paid the winterization cash for which my family was registered in January 2024',
+              telephone_current: '41767373164',
+              identification_date: '2024-06-06',
+              consent_reporting: 'true',
+              feedback_channel_eba5764: 'mobile_teams__field_staff__monitors_afdfc51',
+              age_range_3df3bdb: '18_59_years_old_b6fd344',
+              //0_17_years_old_a619c9b
+              module_id: 'primeromodule-cp',
+              nationality: [
+                'turkey'
+              ]
+          },
           });
     triggers:
       webhook:
         type: webhook
-        enabled: true
+        enabled: false
     edges:
-      webhook->New-job:
+      webhook->create-case:
         source_trigger: webhook
-        target_job: New-job
+        target_job: create-case
         condition_type: always
         enabled: true

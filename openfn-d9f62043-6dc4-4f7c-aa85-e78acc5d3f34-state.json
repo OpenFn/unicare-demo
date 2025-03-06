@@ -1,85 +1,28 @@
 {
   "id": "d9f62043-6dc4-4f7c-aa85-e78acc5d3f34",
   "name": "unicare-demo",
-  "description": null,
-  "inserted_at": "2024-05-23T12:23:14",
-  "updated_at": "2024-05-23T12:23:14",
+  "description": "Demo project for showcasing UNICARE workflows",
+  "concurrency": null,
+  "inserted_at": "2024-05-23T12:23:14Z",
+  "updated_at": "2025-03-06T09:00:34Z",
+  "project_credentials": {
+    "aissatou@openfn.org-Unicare-Demo": {
+      "id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5",
+      "name": "Unicare Demo",
+      "owner": "aissatou@openfn.org"
+    }
+  },
   "scheduled_deletion": null,
+  "history_retention_period": 90,
   "dataclip_retention_period": null,
-  "history_retention_period": null,
-  "requires_mfa": false,
   "retention_policy": "retain_all",
+  "collections": {},
   "workflows": {
-    "inform-to-unicare": {
-      "id": "0beb31a8-ede6-4e2a-8f9c-e2cf4eb51c42",
-      "name": "inform-to-unicare",
-      "inserted_at": "2024-05-23T12:23:38Z",
-      "updated_at": "2024-05-24T10:37:41Z",
-      "project_id": "d9f62043-6dc4-4f7c-aa85-e78acc5d3f34",
-      "deleted_at": null,
-      "lock_version": 11,
-      "triggers": {
-        "webhook": {
-          "enabled": true,
-          "id": "3da0940e-b440-4d55-8c1b-71047dbe9fff",
-          "type": "webhook"
-        }
-      },
-      "jobs": {
-        "Clean-and-process-inform-data": {
-          "id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
-          "name": "Clean and process inform data",
-          "body": "// Get started by adding operations from the API reference\n\nfn(state => {\n  console.log('inform form data:: ', JSON.stringify(state.data, null, 2));\n  return state;\n});",
-          "adaptor": "@openfn/language-common@latest"
-        },
-        "Register-case-in-Primero": {
-          "id": "b5cabd6a-099b-45a1-8b08-b3fe1d712923",
-          "name": "Register case in Primero",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-primero@latest"
-        },
-        "Send-Administrator-Email-Alert": {
-          "id": "ec415772-1610-4d2e-b9e5-6ae5eedf790e",
-          "name": "Send Administrator Email Alert",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-mailgun@latest"
-        }
-      },
-      "edges": {
-        "webhook->Clean-and-process-inform-data": {
-          "enabled": true,
-          "id": "fe8951f4-853f-4eee-9d83-345964c3bc3b",
-          "source_trigger_id": "3da0940e-b440-4d55-8c1b-71047dbe9fff",
-          "condition_type": "always",
-          "condition_label": "Rapid pro data?",
-          "target_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77"
-        },
-        "Clean-and-process-inform-data->Register-case-in-Primero": {
-          "enabled": true,
-          "id": "5976a61b-51a9-4b6a-bad8-8e6107ff870a",
-          "source_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
-          "condition_type": "on_job_success",
-          "target_job_id": "b5cabd6a-099b-45a1-8b08-b3fe1d712923"
-        },
-        "Clean-and-process-inform-data->Send-Administrator-Email-Alert": {
-          "enabled": true,
-          "id": "b1273f16-8445-485c-886d-03f0fd103580",
-          "source_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
-          "condition_type": "js_expression",
-          "condition_expression": "{}",
-          "condition_label": "High risk case?",
-          "target_job_id": "ec415772-1610-4d2e-b9e5-6ae5eedf790e"
-        }
-      }
-    },
-    "rapidpro-to-unicare": {
+    "2-rapidpro-to-unicare": {
       "id": "2c7ec284-bd3c-46ab-a3c6-6406a7ba891c",
-      "name": "rapidpro-to-unicare",
-      "inserted_at": "2024-05-24T10:30:01Z",
-      "updated_at": "2024-05-24T10:30:31Z",
-      "project_id": "d9f62043-6dc4-4f7c-aa85-e78acc5d3f34",
-      "deleted_at": null,
-      "lock_version": 3,
+      "name": "2-rapidpro-to-unicare",
+      "inserted_at": "2024-09-10T15:45:43.225568Z",
+      "lock_version": 14,
       "triggers": {
         "webhook": {
           "enabled": true,
@@ -88,111 +31,208 @@
         }
       },
       "jobs": {
-        "New-job": {
+        "clean-rapidpro-data": {
           "id": "fd24949c-886c-4f5f-9378-55ad517c9d4f",
-          "name": "New job",
-          "body": "// Get started by adding operations from the API reference\n\nfn(state => {\n  // do some things to state\n  console.log('from rapidpro::', state.data); \n  return state;\n});",
-          "adaptor": "@openfn/language-common@latest"
+          "name": "clean rapidpro data",
+          "body": "fn(state => {\n  // do some things to state\n  const { data } = state; \n\n  const consentMap = {\n    'Yes': 'true',\n    'No': 'false'\n  }\n\n  const cleanPhone = data.contact.urn.substring(4,16); \n\n  state.cleanedData = {\n    firstname: data.results.firstname.value,\n    lastname: data.results.lastname.value,\n    consent: consentMap[data.results.consent.value],\n    feedback: data.results.case_description.value,\n    phone: cleanPhone,\n  }\n\n  return state;\n});",
+          "adaptor": "@openfn/language-common@latest",
+          "project_credential_id": null
+        },
+        "register-case": {
+          "id": "ae5202ce-9a83-43c1-a678-3b28e9222a14",
+          "name": "register case",
+          "body": "// Get started by adding operations from the API reference\ncreateCase({\n  data: {\n    name_first: state.cleanedData.firstname,\n    name_last: state.cleanedData.lastName,\n    feedback_comment_f076498: state.cleanedData.feedback,\n    consent_reporting: state.cleanedData.consent,\n    telephone_current: state.cleanedData.phone,\n    feedback_channel_eba5764: 'messaging_app_2da699d',\n    module_id: 'primeromodule-cp',\n    nationality: [\n      'turkey'\n    ],\n  },\n});\n\n// name_first: 'Elif',\n// name_last: 'Adle',\n// sex: 'female',\n// age: 56,",
+          "adaptor": "@openfn/language-primero@latest",
+          "project_credential_id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5"
         }
       },
       "edges": {
-        "webhook->New-job": {
+        "webhook->clean-rapidpro-data": {
           "enabled": true,
           "id": "631f3a32-e26f-4f69-99d7-0c2d7709e2bf",
+          "target_job_id": "fd24949c-886c-4f5f-9378-55ad517c9d4f",
           "source_trigger_id": "c0a7b7a3-8315-4bfa-92a7-0e686749401d",
-          "condition_type": "always",
-          "target_job_id": "fd24949c-886c-4f5f-9378-55ad517c9d4f"
+          "condition_type": "always"
+        },
+        "clean-rapidpro-data->register-case": {
+          "enabled": true,
+          "id": "287145ad-9fdc-4c4d-8c5a-fcf85b1024d5",
+          "target_job_id": "ae5202ce-9a83-43c1-a678-3b28e9222a14",
+          "source_job_id": "fd24949c-886c-4f5f-9378-55ad517c9d4f",
+          "condition_type": "on_job_success"
         }
       }
     },
-    "rapidpro-inform-unicare": {
-      "id": "4a463bec-04bd-4be0-b4e7-c8b41d6565f4",
-      "name": "rapidpro-inform-unicare",
-      "inserted_at": "2024-05-24T10:40:22Z",
-      "updated_at": "2024-05-24T10:41:44Z",
-      "project_id": "d9f62043-6dc4-4f7c-aa85-e78acc5d3f34",
-      "deleted_at": null,
-      "lock_version": 4,
+    "1-inform-to-unicare": {
+      "id": "0beb31a8-ede6-4e2a-8f9c-e2cf4eb51c42",
+      "name": "1-inform-to-unicare",
+      "inserted_at": "2024-09-10T15:45:43.326566Z",
+      "lock_version": 74,
       "triggers": {
         "webhook": {
           "enabled": true,
-          "id": "0e2076f4-b546-4a4a-81fb-6158bde44d01",
+          "id": "3da0940e-b440-4d55-8c1b-71047dbe9fff",
           "type": "webhook"
         }
       },
       "jobs": {
-        "recieve-data-in-OpenFn": {
-          "id": "70308d28-877b-41f6-98f0-309f4dbbd50c",
-          "name": "recieve data in OpenFn",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-common@latest"
+        "Clean-and-map-inform-data": {
+          "id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
+          "name": "Clean and map inform data",
+          "body": "\nfn(state => {\n  console.log('Preparing and cleaning case data...'); \n  const { data } = state;\n\n  //Here we clean & map the data using JavaScript\n  const mapConsent = {\n    'yes': 'true',\n    'no': 'false'\n  }\n  \n  let age = Number(data.Your_age);\n\n  if (age > 0 && age <= 17) {\n    age = '0_17_years_old_a619c9b';\n  } else if (age >= 18 && age <= 59) {\n    age = '18_59_years_old_b6fd344';\n  } else {\n    age = '60_and_above_b0f9d41';\n  }\n\n  const cleanedStartDate = data.start.substring(0, 10);\n \n  //Here we add cleaned attributes to our payload\n  state.cleanedData = {\n    submitDate: cleanedStartDate,\n    age_range: age,\n    consent: mapConsent[data.Do_we_have_your_consent_to_doc]\n  }\n  return state;\n});\n\n\n  // const name_first = data.Your_first_name;\n  // const name_last = data.Your_last_name;\n  // const feedback_comment_f076498 = data.Details_about_your_f_edback_or_complaints\n\n\n",
+          "adaptor": "@openfn/language-common@latest",
+          "project_credential_id": null
         },
-        "Map-Rapid-data": {
-          "id": "43e5543d-be7d-466d-8b07-c86f80c985f0",
-          "name": "Map Rapid data",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-common@latest"
+        "Register-case-in-Primero": {
+          "id": "b5cabd6a-099b-45a1-8b08-b3fe1d712923",
+          "name": "Register case in Primero",
+          "body": "createCase({\n  data: {\n    name_first: state.data.Your_first_name,\n    name_last: state.data.Your_last_name,\n    feedback_comment_f076498: state.data.Details_about_your_f_edback_or_complaints,\n    age: state.data.Your_age,\n    sex: state.data.Your_sex,\n    consent_reporting: state.cleanedData.consent,\n    identification_date: state.cleanedData.submitDate,\n    age_range_3df3bdb: state.cleanedData.ageRange,\n    feedback_channel_eba5764: 'mobile_teams__field_staff__monitors_afdfc51',\n    module_id: 'primeromodule-cp',\n    nationality: [\n      'turkey'\n    ],\n    badMapping: 123,\n    //telephone_current: state.data.Your_phone\n  },\n});",
+          "adaptor": "@openfn/language-primero@latest",
+          "project_credential_id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5"
         },
-        "Map-inform-data": {
-          "id": "1822ea0b-4d0f-42d1-bd17-4b6184b756b1",
-          "name": "Map inform data",
+        "Send-manager-email-alert": {
+          "id": "ec415772-1610-4d2e-b9e5-6ae5eedf790e",
+          "name": "Send manager email alert",
           "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-common@latest"
-        },
-        "Load-Rapid-pro-data-to-Unicare": {
-          "id": "f0db6f4a-130a-47fc-a360-9c6be5e9c00a",
-          "name": "Load Rapid pro data to Unicare",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-primero@latest"
-        },
-        "Load-inform-data-to-Unicare": {
-          "id": "65f4eb03-ee23-4374-86e8-8b11f688beca",
-          "name": "Load inform data to Unicare",
-          "body": "// Get started by adding operations from the API reference\n",
-          "adaptor": "@openfn/language-primero@latest"
+          "adaptor": "@openfn/language-mailgun@latest",
+          "project_credential_id": null
         }
       },
       "edges": {
-        "recieve-data-in-OpenFn->Map-inform-data": {
+        "webhook->Clean-and-map-inform-data": {
           "enabled": true,
-          "id": "5b158d3f-0e5f-45bd-a8bc-c82d32b153fb",
-          "source_job_id": "70308d28-877b-41f6-98f0-309f4dbbd50c",
+          "id": "fe8951f4-853f-4eee-9d83-345964c3bc3b",
+          "target_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
+          "source_trigger_id": "3da0940e-b440-4d55-8c1b-71047dbe9fff",
+          "condition_type": "always"
+        },
+        "Clean-and-map-inform-data->Register-case-in-Primero": {
+          "enabled": true,
+          "id": "5976a61b-51a9-4b6a-bad8-8e6107ff870a",
+          "target_job_id": "b5cabd6a-099b-45a1-8b08-b3fe1d712923",
+          "source_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
+          "condition_type": "on_job_success"
+        },
+        "Clean-and-map-inform-data->Send-manager-email-alert": {
+          "enabled": true,
+          "id": "b1273f16-8445-485c-886d-03f0fd103580",
+          "target_job_id": "ec415772-1610-4d2e-b9e5-6ae5eedf790e",
+          "source_job_id": "cc1a918f-4e9e-4439-a759-e6c88ac8ea77",
           "condition_type": "js_expression",
-          "condition_expression": "{}",
-          "condition_label": "Inform data?",
-          "target_job_id": "1822ea0b-4d0f-42d1-bd17-4b6184b756b1"
-        },
-        "recieve-data-in-OpenFn->Map-Rapid-data": {
+          "condition_label": "High risk case?",
+          "condition_expression": "state.data.How_urgent_is_this_case ===\"top_priority_urgent\""
+        }
+      }
+    },
+    "case-referrals-sync": {
+      "id": "4f522342-82ec-451d-b42c-7c2f77e76b29",
+      "name": "case-referrals-sync",
+      "inserted_at": "2024-09-10T15:45:43.341785Z",
+      "lock_version": 30,
+      "triggers": {
+        "cron": {
           "enabled": true,
-          "id": "fb79fd7c-ddc3-47b7-99ae-d8e0eb3518f0",
-          "source_job_id": "70308d28-877b-41f6-98f0-309f4dbbd50c",
+          "id": "9f9bfaa6-f161-49c5-b9a4-afe66744819a",
+          "type": "cron",
+          "cron_expression": "00 02 * * *"
+        }
+      },
+      "jobs": {
+        "Get-new-referrals": {
+          "id": "28986d6a-9108-4180-81ed-7bf021605e3f",
+          "name": "Get new referrals",
+          "body": "// Get started by adding operations from the API reference\n\n\ngetCases({\nremote: true,\nrecord_id: '027531ed-4bf5-415e-8cda-06357a8b95e3'\n//record_id: \"66f1bd93-9fa4-4621-bd97-cfbcd9ef46d6\"\n//query: \"sex=male\",\n});\n\n\n// createCase({\n// data: {\n// //nationality: \"bosnia_and_herzegovina\",\n// age_range_3df3bdb: \"0_17_years_old_a619c9b\",\n// name_first: \"A\",\n// name_last: \"D\",\n// //age: 16,\n// //sex: \"female\",\n// //name: \"Edwine Edgemont\",\n// feedback_comment_f076498: \"TEST\",\n// risk_level: \"low\"\n// },\n// });",
+          "adaptor": "@openfn/language-primero@latest",
+          "project_credential_id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5"
+        },
+        "clean-and-map-data": {
+          "id": "fbe420fe-f28b-41d6-989d-08e53547b2ba",
+          "name": "clean and map data",
+          "body": "// Get started by adding operations from the API reference\n",
+          "adaptor": "@openfn/language-common@latest",
+          "project_credential_id": null
+        },
+        "Report-to-govt-app": {
+          "id": "d01bc4b9-b75c-4a4c-9177-c9785e1d6483",
+          "name": "Report to govt app",
+          "body": "// Get started by adding operations from the API reference\n",
+          "adaptor": "@openfn/language-dhis2@latest",
+          "project_credential_id": null
+        },
+        "Send-to-partner-agency": {
+          "id": "17c104a5-a716-4084-847e-cf5baa3f8a41",
+          "name": "Send to partner agency",
+          "body": "// Get started by adding operations from the API reference\n",
+          "adaptor": "@openfn/language-openspp@latest",
+          "project_credential_id": null
+        }
+      },
+      "edges": {
+        "cron->Get-new-referrals": {
+          "enabled": true,
+          "id": "12fb2d94-d577-46a6-8471-ea47a4f6fbce",
+          "target_job_id": "28986d6a-9108-4180-81ed-7bf021605e3f",
+          "source_trigger_id": "9f9bfaa6-f161-49c5-b9a4-afe66744819a",
+          "condition_type": "always"
+        },
+        "Get-new-referrals->clean-and-map-data": {
+          "enabled": true,
+          "id": "72f77944-0525-40f6-b6ca-d291003a6c5e",
+          "target_job_id": "fbe420fe-f28b-41d6-989d-08e53547b2ba",
+          "source_job_id": "28986d6a-9108-4180-81ed-7bf021605e3f",
+          "condition_type": "on_job_success"
+        },
+        "clean-and-map-data->Report-to-govt-app": {
+          "enabled": true,
+          "id": "32f2ca0d-3e18-43bb-a017-beeec0b414b9",
+          "target_job_id": "d01bc4b9-b75c-4a4c-9177-c9785e1d6483",
+          "source_job_id": "fbe420fe-f28b-41d6-989d-08e53547b2ba",
           "condition_type": "js_expression",
-          "condition_expression": "{}",
-          "condition_label": "Rapid pro data?",
-          "target_job_id": "43e5543d-be7d-466d-8b07-c86f80c985f0"
+          "condition_label": "govt referral",
+          "condition_expression": "state.data.referral_type ===\"government\""
         },
-        "webhook->recieve-data-in-OpenFn": {
+        "clean-and-map-data->Send-to-partner-agency": {
           "enabled": true,
-          "id": "64d477fb-432d-4613-a0f5-34a62e40e268",
-          "source_trigger_id": "0e2076f4-b546-4a4a-81fb-6158bde44d01",
-          "condition_type": "always",
-          "target_job_id": "70308d28-877b-41f6-98f0-309f4dbbd50c"
-        },
-        "Map-Rapid-data->Load-Rapid-pro-data-to-Unicare": {
+          "id": "9911fc79-92dd-4f33-8706-d87a856bb862",
+          "target_job_id": "17c104a5-a716-4084-847e-cf5baa3f8a41",
+          "source_job_id": "fbe420fe-f28b-41d6-989d-08e53547b2ba",
+          "condition_type": "js_expression",
+          "condition_label": "partner referral",
+          "condition_expression": "state.data.referral_type ===\"partner-agency\""
+        }
+      }
+    },
+    "register-case": {
+      "id": "7849b030-b48f-46ea-9740-46e94a53d5a1",
+      "name": "register-case",
+      "inserted_at": "2024-09-10T15:45:43.680239Z",
+      "lock_version": 17,
+      "triggers": {
+        "webhook": {
+          "enabled": false,
+          "id": "7476536d-5146-43e2-894b-1a2b670ba819",
+          "type": "webhook"
+        }
+      },
+      "jobs": {
+        "create-case": {
+          "id": "2092e7ac-73ba-4ff6-8857-dd9beedd4c45",
+          "name": "create case",
+          "body": "createCase({\n  data: {\n    age: 38,\n    sex: 'male',\n    name_first: 'Deniz',\n    name_last: 'Demir',\n    feedback_comment_f076498: 'I would like to know why UNICEF has not yet paid the winterization cash for which my family was registered in January 2024',\n    telephone_current: '41767373164',\n    identification_date: '2024-06-06',\n    consent_reporting: 'true',\n    feedback_channel_eba5764: 'mobile_teams__field_staff__monitors_afdfc51',\n    age_range_3df3bdb: '18_59_years_old_b6fd344',\n    //0_17_years_old_a619c9b\n    module_id: 'primeromodule-cp',\n    nationality: [\n      'turkey'\n    ]\n},\n});",
+          "adaptor": "@openfn/language-primero@2.11.13",
+          "project_credential_id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5"
+        }
+      },
+      "edges": {
+        "webhook->create-case": {
           "enabled": true,
-          "id": "c72d5d6c-ad38-4e2d-96e1-8ea73c796cd0",
-          "source_job_id": "43e5543d-be7d-466d-8b07-c86f80c985f0",
-          "condition_type": "on_job_success",
-          "target_job_id": "f0db6f4a-130a-47fc-a360-9c6be5e9c00a"
-        },
-        "Map-inform-data->Load-inform-data-to-Unicare": {
-          "enabled": true,
-          "id": "6886496e-3483-4bbc-839f-f5941fd5435a",
-          "source_job_id": "1822ea0b-4d0f-42d1-bd17-4b6184b756b1",
-          "condition_type": "on_job_success",
-          "target_job_id": "65f4eb03-ee23-4374-86e8-8b11f688beca"
+          "id": "cd19301f-7c71-482e-8498-1dffda1b6fe2",
+          "target_job_id": "2092e7ac-73ba-4ff6-8857-dd9beedd4c45",
+          "source_trigger_id": "7476536d-5146-43e2-894b-1a2b670ba819",
+          "condition_type": "always"
         }
       }
     }
-  }
+  },
+  "requires_mfa": false
 }
