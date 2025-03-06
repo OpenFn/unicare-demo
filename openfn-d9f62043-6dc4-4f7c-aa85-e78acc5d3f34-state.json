@@ -5,6 +5,7 @@
   "concurrency": null,
   "inserted_at": "2024-05-23T12:23:14Z",
   "updated_at": "2025-03-06T09:00:34Z",
+  "scheduled_deletion": null,
   "project_credentials": {
     "aissatou@openfn.org-Unicare-Demo": {
       "id": "a6cc7f4f-1f79-44cd-bad2-ed258fd5beb5",
@@ -12,7 +13,6 @@
       "owner": "aissatou@openfn.org"
     }
   },
-  "scheduled_deletion": null,
   "history_retention_period": 90,
   "dataclip_retention_period": null,
   "retention_policy": "retain_all",
